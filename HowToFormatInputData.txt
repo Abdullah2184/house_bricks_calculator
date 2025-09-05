@@ -1,1 +1,0 @@
-These are instructions regarding how the input data (Wall dimension data) should be formatted when written in the txt file so as to allow the program to properly read it and extract the data.
