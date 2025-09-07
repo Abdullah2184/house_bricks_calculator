@@ -1,0 +1,15 @@
+House class:
+- attributes : array of bricks, array of walls, array of windows, owner_name (if they save the house_summary to database file)
+- methods: function to return data about bricks, about walls and num_of_walls, about windows and num_of_windows, to read from files and set the data (might have to be broken down into multiple methods), to summarise info and write to file or console, to allocate array for each object dynamically while reading
+
+Window Class:
+- attributes: identifier, height, width, brick_type, associatedWall  
+- methods: methods to calculate volume, to return the different attributes
+
+Wall Class:
+- attributes: identifier, height, width, thickness, brick_type, associatedWall  
+- methods: methods to calculate volume, to return the different attributes
+
+Bricks Class:
+- attributes: dimensions, type (identifier), 
+- methods: function that sets and returns measurements
