@@ -42,7 +42,8 @@ Windows: Modeled in the same plane as the wall they belong to; thickness equals 
 
 Roof and Floor: If made of bricks, treat as walls and include with type "Wall".
 
-
+Bricks: Keeping the brick with the longest side (length) in front, take the vertical distance as the
+height and the distance from the front-face to the back-face as the thickness
 
 **Line Format**
 
