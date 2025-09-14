@@ -50,7 +50,8 @@ height and the distance from the front-face to the back-face as the thickness
 Object-Type Object-Name Left-Top Right-Bottom Thickness
 
 **Examples:**
-
+//What if I only write specifically what I need (since the instruction document is also there)
+eg. Wall Kitchen-cabinet-wall 10 10 2 Concrete
 "Wall" "Kitchen-cabinet-wall" (0,10) (10,0) 2
 
 "Window" "Front-french-windows" (0,5) (5,0) 2

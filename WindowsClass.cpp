@@ -1,12 +1,26 @@
+#include <string>
+
 class Windows {
     private:
-        string identifier;
+        std::string identifier;
         double height;
         double width;
-        string associated_wall;
+        std::string associated_wall;
 
     public:
-    string get_identifier() {
+    Windows() {
+        identifier = "";
+        height = 0;
+        width = 0;
+        associated_wall = "";
+    }
+    Windows(std::string id, double h, double w, std::string asc_wall) {
+        identifier = id;
+        height = h;
+        width = w;
+        associated_wall = asc_wall;
+    }
+    std::string get_identifier() {
         return identifier;
     }
     double get_width() {
@@ -15,10 +29,10 @@ class Windows {
     double get_height() {
         return height;
     }
-    string get_asc_wall() {
+    std::string get_asc_wall() {
         return associated_wall;
     }
-    string get_area() {
+    std::string get_area() {
         return height * width;
     }
 };

@@ -1,14 +1,24 @@
+#include <string>
+
 class Walls {
     private:
-    string identifier;
+    std::string identifier;
     double height;
     double width;
     double thickness;
-    int brick_type;
+    std::string brick_type;
 
     public:
 
-    string get_identifier() {
+    Walls(std::string id, double h, double w, double thick, std::string b_type) {
+        identifier = id;
+        height = h;
+        width = w;
+        thickness = thick;
+        brick_type = b_type;
+    }
+
+    std::string get_identifier() {
         
     }
     double get_width() {

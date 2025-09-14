@@ -17,3 +17,11 @@ Bricks Class:
 Door Class:
 - attributes: identifier, height, width, associatedWall  
 - methods: methods to calculate area, to return the different attributes
+
+HOW THE PROGRAM FLOWS: 
+The house class will instantiate an object. That House object will read the file, storing
+the relevant data in the arrays and variables. Then each object will have the necessary data
+and methods to calculate its dimensions. The calculate_bricks_required function will call 
+them to give this data and using basic addition and common sense, it will figure out the bricks
+of various types required and then print to console or save to file. (For ease, can just
+concatenate to a string variable the data we are concerned about)
