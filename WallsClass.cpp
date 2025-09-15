@@ -10,6 +10,10 @@ class Walls {
 
     public:
 
+    //public because not an issue
+    bool has_window; //have to include in the constructor and any other required functions
+    bool has_door;
+
     Walls(std::string id, double h, double w, double thick, std::string b_type) {
         identifier = id;
         height = h;

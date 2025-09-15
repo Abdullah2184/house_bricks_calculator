@@ -25,6 +25,7 @@ class House {
     House(std::string filename);
     ~House();
     void readHouseData(std::string filename);
+    void House::calculate_bricks();
     void append_Wall(Walls*& walls_arr, Walls wall, int& num_walls);
     void append_Window(Windows* windows_arr, Windows window, int& num_windows);
     void append_Door(Doors* door_arr, Doors door, int& num_doors);
@@ -37,6 +38,7 @@ class House {
 House::House() {
     owner_name = "";
     bricks_arr = nullptr;
+    num_bricks_types = 0;
     //num_bricks_req = 0;
     walls_arr = nullptr;
     num_walls = 0;
@@ -213,3 +215,45 @@ void House::writeHouseData(std::string filename) {
 void House::set_name() {
     std::cout << "Enter the owner's name: "; std::cin >> owner_name;
 }
+
+//pseudo-code to implement logic, then will name everything properly 
+void House::calculate_bricks() {
+    //Loops through the bricks
+    for (int i=0; i<num_bricks_types; i++) {
+        //Loops through the walls
+        int total_volume = 0;
+        for (int j=0; j<num_walls;) {
+            //If the types match, add to the number of bricks of this type required
+            if (bricks_arr[i].type = wall_arr[j].brick_type) {
+                //have to round upwards, not downwards (default)
+                total_volume += wall_arr[j].get_volume()
+            }
+            //If the wall has a window or door, find it by looping,
+            // through the array and calculate dimensions
+            //and subtract that volume frrom the volume
+            if (walls_arr[j].has_window) {
+                for (int k=0; k<num_windows; k++) {
+                    if (walls_arr[j].get_identifier() == windows_arr[k].get_asc_wall) {
+                        //multiples the area of the window with the thickness of the wall
+                        //to get a proper estimate of the volume subtracted by the window
+                        total_volume -= (windows_arr[k].get_area) * (walls_arr[j].get_thickness);
+                    }
+                }
+            }
+            if (walls_arr[j].has_door) {
+                for (int k=0; k<num_doors; k++) {
+                    if (walls_arr[j].get_identifier() == doors_arr[k].get_asc_wall) {
+                        //multiples the area of the window with the thickness of the wall
+                        //to get a proper estimate of the volume subtracted by the window
+                        total_volume -= (doors_arr[k].get_area) * (walls_arr[j].get_thickness);
+                    }
+                }
+            }
+            //Now calculates the number of this type of bricks required
+            //based on the total volume of wall and volume of brick
+            //and passes it to the specific brick class
+            bricks_arr[i].set_num_req( total_volume / bricks_arr[i].get_dimensions() );
+        }
+    }
+}
+

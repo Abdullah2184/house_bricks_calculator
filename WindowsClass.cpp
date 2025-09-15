@@ -32,7 +32,7 @@ class Windows {
     std::string get_asc_wall() {
         return associated_wall;
     }
-    std::string get_area() {
+    double get_area() {
         return height * width;
     }
 };

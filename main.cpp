@@ -1,4 +1,5 @@
 #include <iostream>
+#include "HouseClass.cpp"
 
 
 int main() {
@@ -8,4 +9,6 @@ int main() {
     std::string filename;
     std::cin >> filename;
     userHouse.readHouseData(filename);
+    userHouse.calculate_bricks();
+    userHouse.displayHouseData;
 }
