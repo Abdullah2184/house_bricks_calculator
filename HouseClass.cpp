@@ -37,7 +37,7 @@ class House {
 House::House() {
     owner_name = "";
     bricks_arr = nullptr;
-    num_bricks_req = 0;
+    //num_bricks_req = 0;
     walls_arr = nullptr;
     num_walls = 0;
     windows_arr = nullptr;
