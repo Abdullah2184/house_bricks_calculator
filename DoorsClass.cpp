@@ -1,12 +1,19 @@
 class Doors {
     private:
-        string identifier;
+        std::string identifier;
         double height;
         double width;
-        string associated_wall;
+        std::string associated_wall;
 
     public:
-    string get_identifier() {
+    Doors() = default;
+    Doors(std::string i_identifier, double i_height, double i_width, std::string i_asc_wall) {
+        identifier = i_identifier;
+        height = i_height;
+        width = i_width;
+        associated_wall = i_asc_wall;
+    }
+    std::string get_identifier() {
         return identifier;
     }
     double get_width() {
@@ -15,10 +22,10 @@ class Doors {
     double get_height() {
         return height;
     }
-    string get_asc_wall() {
+    std::string get_asc_wall() {
         return associated_wall;
     }
-    string get_area() {
+    double get_area() {
         return height * width;
     }
-}
+};

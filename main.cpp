@@ -10,5 +10,5 @@ int main() {
     std::cin >> filename;
     userHouse.readHouseData(filename);
     userHouse.calculate_bricks();
-    userHouse.displayHouseData;
+    userHouse.displayHouseData();
 }

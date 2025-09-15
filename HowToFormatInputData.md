@@ -14,7 +14,8 @@ The Name column uniquely identifies each wall or window for clarity and ease of 
 
 Brackets () for coordinates and double-quotes "" for strings must be included.
 
-
+For the walls, if it has windows or doors, there should be a 1 in the respective column,
+otherwise 0 
 
 **Coordinate System**
 
@@ -51,8 +52,9 @@ Object-Type Object-Name Left-Top Right-Bottom Thickness
 
 **Examples:**
 //What if I only write specifically what I need (since the instruction document is also there)
-eg. Wall Kitchen-cabinet-wall 10 10 2 Concrete
-"Wall" "Kitchen-cabinet-wall" (0,10) (10,0) 2
+//eg. Wall Kitchen-cabinet-wall 10 10 2 Concrete
+//"Wall" "Kitchen-cabinet-wall" (0,10) (10,0) 2
 
-"Window" "Front-french-windows" (0,5) (5,0) 2
+"Wall" "Kitchen-cabinet-wall" 10 10 2 "Concrete" 0 0
+"Window" "Front-french-windows" 5 5 "kitchen-cabinet-wall"
 

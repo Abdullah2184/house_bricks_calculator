@@ -26,12 +26,12 @@ class House {
     ~House();
     void readHouseData(std::string filename);
     void House::calculate_bricks();
-    void append_Wall(Walls*& walls_arr, Walls wall, int& num_walls);
-    void append_Window(Windows* windows_arr, Windows window, int& num_windows);
-    void append_Door(Doors* door_arr, Doors door, int& num_doors);
-    void append_Brick(Bricks* bricks_arr, Bricks brick, int& num_bricks_types);
-    void displayHouseData(std::string house_data);
-    void writeHouseData(std::string filename, std::string house_data);
+    void append_Wall(Walls new_wall);
+    void append_Window(Windows new_window);
+    void append_Door(Doors new_door);
+    void append_Brick(Bricks new_brick);
+    void displayHouseData();
+    void writeHouseData();
     void set_name();
 };
 
@@ -46,6 +46,7 @@ House::House() {
     num_windows = 0;
     doors_arr = nullptr;
     num_doors = 0;
+    house_data = "";
 }
 
 House::~House() {
@@ -58,7 +59,7 @@ House::~House() {
 void House::readHouseData(std::string filename) {
     std::ifstream infile(filename);
     if (!infile) {
-        std::cerr << "Error opening file: " << filename << endl;
+        std::cerr << "Error opening file: " << filename << std::endl;
         return;
     }
 
@@ -75,14 +76,17 @@ void House::readHouseData(std::string filename) {
         if (obj_type == "Wall") {
             
             //Read all the attributes of the object
-            std::string identifier, brick_type; double height, width, thickness;
-            infile >> identifier >> height >> width >> thickness >> brick_type;
+            std::string identifier, brick_type; 
+            double height, width, thickness;
+            bool has_window, has_door;
+            infile >> identifier >> height >> width >> thickness
+            >> brick_type >> has_window >> has_door;
             
             //Construct the window object using class constructor
-            Walls wall_input(identifier, height, width, thickness, brick_type);
+            Walls wall_input(identifier, height, width, thickness, brick_type, has_window, has_door);
             
             //Append the new object to the dynamic object array
-            append_Wall(walls_arr, wall_input, num_walls);
+            append_Wall(wall_input);
 
         } else if (obj_type == "Window") {
 
@@ -91,7 +95,7 @@ void House::readHouseData(std::string filename) {
             
             Windows window_input(identifier, height, width, asc_wall);
 
-            append_Window(windows_arr, window_input, num_windows);
+            append_Window(window_input);
 
         } else if (obj_type == "Door") {
 
@@ -100,7 +104,7 @@ void House::readHouseData(std::string filename) {
             
             Doors door_input(identifier, height, width, asc_wall);
 
-            append_Door(doors_arr, door_input, num_doors);
+            append_Door(door_input);
 
         } else if (obj_type == "Brick") {
 
@@ -109,7 +113,7 @@ void House::readHouseData(std::string filename) {
             
             Bricks brick_input(identifier, height, width, thickness);
 
-            append_Door(doors_arr, brick_input, num_bricks_types);
+            append_Brick(brick_input);
 
         } else {    
             std::string rm_line; //Invalid object. Discarded
@@ -120,24 +124,24 @@ void House::readHouseData(std::string filename) {
     infile.close();
 }
 
-void House::append_Wall(Walls*& walls_arr, Walls new_wall, int& num_walls) {
+void House::append_Wall(Walls new_wall) {
     //Takes in the current walls array, resizes it by dynamically allocating
     //a new array of size num_walls + 1, copies the old array to the new one,
     //appends the new wall to the end, deletes the old array, and updates
     //the pointer and num_walls variable
     
-    //Fix the the other functions so they match this
-
-    //Have to fix the initial assigning of the walls here, otherwise 
-    //there would be a segmentation fault, because the walls_arr 
-    //doesn't have a size
-    if (!walls_arr) return; //do it so it assigns it an address and pushes the wall in it
-    //no need to create a new array or any resizing so return after this
+    //If the pointer array hasn't been created (first append call): 
+    if (!walls_arr) {
+        walls_arr = new Walls[1];
+        walls_arr[0] = new_wall;
+        num_walls = 1;
+        return;
+    }
 
 
     Walls* new_arr = new Walls[num_walls+1];
     for (int i=0; i<num_walls; i++) {
-        new_arr[i] = walls_arr[i]
+        new_arr[i] = walls_arr[i];
     }
 
     //works
@@ -149,11 +153,18 @@ void House::append_Wall(Walls*& walls_arr, Walls new_wall, int& num_walls) {
     num_walls++;
 }
 
-void House::append_Window(Windows*& windows_arr, Windows new_window, int& num_windows) {
+void House::append_Window(Windows new_window) {
     //Same as append_Wall but for windows
+    if (!windows_arr) {
+        windows_arr = new Windows[1];
+        windows_arr[0] = new_window;
+        num_windows = 1;
+        return;
+    }
+
     Windows* new_arr = new Windows[num_windows+1];
     for (int i=0; i<num_windows; i++) {
-        new_arr[i] = windows_arr[i]
+        new_arr[i] = windows_arr[i];
     }
 
     //works
@@ -165,42 +176,65 @@ void House::append_Window(Windows*& windows_arr, Windows new_window, int& num_wi
     num_windows++;
 }
 
-void House::append_Door(Doors* doors_arr, Doors new_door, int& num_doors) {
+void House::append_Door(Doors new_door) {
+    if (!doors_arr) {
+        doors_arr = new Doors[1];
+        doors_arr[0] = new_door;
+        num_doors = 1;
+        return;
+    }
+    
     //Same as append_Wall but for doors
     Doors* new_arr = new Doors[num_doors+1];
     for (int i=0; i<num_doors; i++) {
-        new_arr[i] = doors_arr[i]
+        new_arr[i] = doors_arr[i];
     }
 
-    //have to see if this works
+    //works
     new_arr[num_doors] = new_door;
 
-    //have to see if this works
-    doors_arr = new_arr
-    delete[] new_arr;
+    //works
+    delete[] doors_arr;
+    doors_arr = new_arr;
+    num_doors++;
 }
 
-void House::append_Brick(Bricks* bricks_arr, Bricks new_brick, int& num_bricks_types) {
+void House::append_Brick(Bricks new_brick) {
     //Same as append_Wall but for bricks
-    Bricks* new_arr = new Bricks[num_bricks_types+1];
-    for (int i=0; i<num_bricks_types; i++) {
-        new_arr[i] = bricks_arr[i]
+
+    if (!doors_arr) {
+        bricks_arr = new Bricks[1];
+        bricks_arr[0] = new_brick;
+        num_windows = 1;
+        return;
     }
 
-    //have to see if this works
+    Bricks* new_arr = new Bricks[num_bricks_types+1];
+    for (int i=0; i<num_bricks_types; i++) {
+        new_arr[i] = bricks_arr[i];
+    }
+
+    //works
     new_arr[num_bricks_types] = new_brick;
 
-    //have to see if this works
-    bricks_arr = new_arr
-    delete[] new_arr;
+    //works
+    delete[] bricks_arr;
+    bricks_arr = new_arr;
+    num_bricks_types++;
 }
 
 void House::displayHouseData() {
     //Displays a summary of the house plan, and a final verdict on the bricks required
+    std::cout << house_data << "\n"; 
 }
 
-void House::writeHouseData(std::string filename) {
+void House::writeHouseData() {
+    //Take the filename as input
+    std::string filename;
+    std::cout << "Enter the filename: ";
+    std::cin >> filename;
     std::ofstream outfile(filename);
+
     if (!outfile) {
         std::cerr << "Error opening file: " << filename << std::endl;
         return;
@@ -224,35 +258,37 @@ void House::calculate_bricks() {
         int total_volume = 0;
         for (int j=0; j<num_walls;) {
             //If the types match, add to the number of bricks of this type required
-            if (bricks_arr[i].type = wall_arr[j].brick_type) {
+            if (bricks_arr[i].get_type() == walls_arr[j].get_brick_type()) {
                 //have to round upwards, not downwards (default)
-                total_volume += wall_arr[j].get_volume()
+                total_volume += walls_arr[j].get_volume();
             }
             //If the wall has a window or door, find it by looping,
             // through the array and calculate dimensions
             //and subtract that volume frrom the volume
             if (walls_arr[j].has_window) {
                 for (int k=0; k<num_windows; k++) {
-                    if (walls_arr[j].get_identifier() == windows_arr[k].get_asc_wall) {
+                    if (walls_arr[j].get_identifier() == windows_arr[k].get_asc_wall()) {
                         //multiples the area of the window with the thickness of the wall
                         //to get a proper estimate of the volume subtracted by the window
-                        total_volume -= (windows_arr[k].get_area) * (walls_arr[j].get_thickness);
+                        total_volume -= (windows_arr[k].get_area()) * (walls_arr[j].get_thickness());
                     }
                 }
             }
             if (walls_arr[j].has_door) {
                 for (int k=0; k<num_doors; k++) {
-                    if (walls_arr[j].get_identifier() == doors_arr[k].get_asc_wall) {
+                    if (walls_arr[j].get_identifier() == doors_arr[k].get_asc_wall()) {
                         //multiples the area of the window with the thickness of the wall
                         //to get a proper estimate of the volume subtracted by the window
-                        total_volume -= (doors_arr[k].get_area) * (walls_arr[j].get_thickness);
+                        total_volume -= (doors_arr[k].get_area()) * (walls_arr[j].get_thickness());
                     }
                 }
             }
             //Now calculates the number of this type of bricks required
             //based on the total volume of wall and volume of brick
             //and passes it to the specific brick class
-            bricks_arr[i].set_num_req( total_volume / bricks_arr[i].get_dimensions() );
+            bricks_arr[i].set_num_req( total_volume / bricks_arr[i].get_volume() );
+            house_data += "The number of " + bricks_arr[i].get_type() + " bricks required is : "; 
+            house_data += bricks_arr[i].get_num_req() + "\n";
         }
     }
 }
