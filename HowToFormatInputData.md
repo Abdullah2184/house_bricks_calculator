@@ -1,7 +1,5 @@
 These instructions define the required format for Wall and Window dimension data in a .txt file to ensure correct parsing and processing by the program:
 
-
-
 **File Structure and Syntax Specification**
 
 The first line of the file must be a header.
@@ -25,15 +23,11 @@ The origin (0,0) is set at the left-bottom corner of the wall.
 
 Coordinates are specified in (x,y) form.
 
-
-
 **Measurements**
 
 Thickness is entered as a single numeric value.
 
 All measurements are in metres.
-
-
 
 **Object Specification**
 
@@ -57,4 +51,3 @@ Object-Type Object-Name Left-Top Right-Bottom Thickness
 
 "Wall" "Kitchen-cabinet-wall" 10 10 2 "Concrete" 0 0
 "Window" "Front-french-windows" 5 5 "kitchen-cabinet-wall"
-
