@@ -1,7 +1,7 @@
 class Bricks {
     private:
         std::string type;
-        int num_bricks_req;
+        int num_bricks_req = 0;
         double height;
         double width;
         double thickness;
@@ -17,7 +17,7 @@ class Bricks {
         std::string get_type() {
             return type;
         }
-        void set_num_req(int num_req) {
+        void update_num_req(int num_req) {
             num_bricks_req = num_req;
         }
         int get_num_req() {

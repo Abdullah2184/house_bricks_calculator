@@ -25,7 +25,6 @@ class House {
     House(std::string filename);
     ~House();
     void readHouseData(std::string filename);
-    void House::calculate_bricks();
     void append_Wall(Walls new_wall);
     void append_Window(Windows new_window);
     void append_Door(Doors new_door);
@@ -33,6 +32,7 @@ class House {
     void displayHouseData();
     void writeHouseData();
     void set_name();
+    void calculate_bricks();
 };
 
 House::House() {
@@ -63,22 +63,25 @@ void House::readHouseData(std::string filename) {
         return;
     }
 
+    std::cout << "File opened successfully"; //DEBUGGING
     //Write the code to read the formatted data from the file
     //Reads word by word for each line, then based on the
     //first word, it assigns the rest of the line to the appropriate variable
     std::string header;
     std::string obj_type;
     getline(infile, header); //removes the column lines from the filestream buffer
-    while(infile) {
-        infile >> obj_type; //Takes the first column to identify the type of object
-
+    int runs = 0; //DEBUGGING
+    while(infile >> obj_type) {
+        //infile >> obj_type; //Takes the first column to identify the type of object
+        std::cout << "Object type read: " << obj_type << "\n"; //DEBUGGING
+        std::cout << ++runs << "\n"; //DEBUGGING
         //Performs specific instructions as per object type
         if (obj_type == "Wall") {
             
             //Read all the attributes of the object
             std::string identifier, brick_type; 
             double height, width, thickness;
-            bool has_window, has_door;
+            int has_window, has_door;
             infile >> identifier >> height >> width >> thickness
             >> brick_type >> has_window >> has_door;
             
@@ -119,6 +122,9 @@ void House::readHouseData(std::string filename) {
             std::string rm_line; //Invalid object. Discarded
             getline(infile, rm_line);
         }
+        std::cout << "Stream good? " << infile.good() << "\n";
+        std::cout << "Stream fail? " << infile.fail() << "\n";
+        std::cout << "Stream eof? " << infile.eof() << "\n";
     }
 
     infile.close();
@@ -151,6 +157,8 @@ void House::append_Wall(Walls new_wall) {
     delete[] walls_arr;
     walls_arr = new_arr;
     num_walls++;
+    std::cout << "Appending Wall, identifier\n"; //DEBUGGING
+
 }
 
 void House::append_Window(Windows new_window) {
@@ -174,6 +182,7 @@ void House::append_Window(Windows new_window) {
     delete[] windows_arr;
     windows_arr = new_arr;
     num_windows++;
+    std::cout << "Appending Window, identifier\n"; //DEBUGGING
 }
 
 void House::append_Door(Doors new_door) {
@@ -197,6 +206,7 @@ void House::append_Door(Doors new_door) {
     delete[] doors_arr;
     doors_arr = new_arr;
     num_doors++;
+    std::cout << "Appending Door, identifier\n"; //DEBUGGING
 }
 
 void House::append_Brick(Bricks new_brick) {
@@ -220,11 +230,14 @@ void House::append_Brick(Bricks new_brick) {
     //works
     delete[] bricks_arr;
     bricks_arr = new_arr;
-    num_bricks_types++;
+    std::cout << ++num_bricks_types;
+
+    std::cout << "Appending Brick, identifier\n"; //DEBUGGING
 }
 
 void House::displayHouseData() {
     //Displays a summary of the house plan, and a final verdict on the bricks required
+    std::cout << "Going to print the data now:\n"; //DEBUGGING
     std::cout << house_data << "\n"; 
 }
 
@@ -252,25 +265,39 @@ void House::set_name() {
 
 //pseudo-code to implement logic, then will name everything properly 
 void House::calculate_bricks() {
+    std::cout << "Entered the function: "<< num_bricks_types << "\n"; //DEBUGGING
     //Loops through the bricks
     for (int i=0; i<num_bricks_types; i++) {
         //Loops through the walls
-        int total_volume = 0;
-        for (int j=0; j<num_walls;) {
+        int num_bricks = 0;
+        std::cout << "Calculating for brick type: " << bricks_arr[i].get_type() << "\n"; //DEBUGGING
+        double total_volume = 0;
+        std::cout << "Number of walls:  " << num_walls << "\n"; //DEBUGGING 
+        for (int j=0; j<num_walls;j++) {
             //If the types match, add to the number of bricks of this type required
-            if (bricks_arr[i].get_type() == walls_arr[j].get_brick_type()) {
-                //have to round upwards, not downwards (default)
-                total_volume += walls_arr[j].get_volume();
+            std::cout << "Calculating for wall: " << walls_arr[j].get_identifier() << " | " << walls_arr[j].get_brick_type() << "\n";
+            if (bricks_arr[i].get_type() != walls_arr[j].get_brick_type()) {
+                std::cout << "Number of bricks for this: " << num_bricks << "\n"; //DEBUGGING
+                continue;
             }
+            
+            std::cout << "Wall matched: " << walls_arr[j].get_identifier() << "\n"; //DEBUGGING
+            //have to round upwards, not downwards (default)
+            //Calculate the volume of the wall and add it to the total volume
+            total_volume += walls_arr[j].get_volume();
+            std::cout << "Volume now from the wall: " << total_volume << "\n"; //DEBUGGING
+
             //If the wall has a window or door, find it by looping,
             // through the array and calculate dimensions
             //and subtract that volume frrom the volume
             if (walls_arr[j].has_window) {
-                for (int k=0; k<num_windows; k++) {
+                std::cout << "Wall has window(s): " << walls_arr[j].get_identifier() << "\n"; //DEBUGGING
+                for (int k=0; k < num_windows; k++) {
                     if (walls_arr[j].get_identifier() == windows_arr[k].get_asc_wall()) {
                         //multiples the area of the window with the thickness of the wall
                         //to get a proper estimate of the volume subtracted by the window
-                        total_volume -= (windows_arr[k].get_area()) * (walls_arr[j].get_thickness());
+                        total_volume -= ( (windows_arr[k].get_area())*(walls_arr[j].get_thickness()) );
+                        std::cout << "Volume now after subtracting windows: " << total_volume << "\n"; //DEBUGGING
                     }
                 }
             }
@@ -279,17 +306,23 @@ void House::calculate_bricks() {
                     if (walls_arr[j].get_identifier() == doors_arr[k].get_asc_wall()) {
                         //multiples the area of the window with the thickness of the wall
                         //to get a proper estimate of the volume subtracted by the window
-                        total_volume -= (doors_arr[k].get_area()) * (walls_arr[j].get_thickness());
+                        total_volume -= ( (doors_arr[k].get_area())*(walls_arr[j].get_thickness()) );
+                        std::cout << "Volume now after subtracting doors: " << total_volume << "\n"; //DEBUGGING
                     }
                 }
             }
             //Now calculates the number of this type of bricks required
             //based on the total volume of wall and volume of brick
             //and passes it to the specific brick class
-            bricks_arr[i].set_num_req( total_volume / bricks_arr[i].get_volume() );
-            house_data += "The number of " + bricks_arr[i].get_type() + " bricks required is : "; 
-            house_data += bricks_arr[i].get_num_req() + "\n";
+            std::cout << "Total volume: " << total_volume << " | " << "Brick volume: " << bricks_arr[i].get_volume() << "\n";
+            num_bricks += static_cast<int>(total_volume / bricks_arr[i].get_volume());
+            std::cout << "Number of bricks for this: " << num_bricks << "\n"; //DEBUGGING
+            bricks_arr[i].update_num_req(num_bricks);
         }
+        house_data += "The number of " + bricks_arr[i].get_type() + " bricks required is : "; 
+        house_data += std::to_string(bricks_arr[i].get_num_req()) + "\n";
+        std::cout << "House info now: " << house_data << "\n";
     }
+    std::cout << "FINISHED CALCULATING\n"; //DEBUGGING
 }
 

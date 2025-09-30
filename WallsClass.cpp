@@ -30,10 +30,10 @@ class Walls {
         return identifier;
     }
     double get_width() {
-        return height;
+        return width;
     }
     double get_thickness() {
-        return height;
+        return thickness;
     }
     double get_height() {
         return height;

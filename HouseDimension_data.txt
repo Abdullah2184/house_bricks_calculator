@@ -1,26 +1,26 @@
 Object-Type Identifier Attributes
-"Wall" "North-external-wall" 3 10 0.2 "Clay-brick" 2 1
-"Wall" "South-external-wall" 3 10 10.2 "Clay-brick" 1 1
-"Wall" "East-external-wall" 3 10 0.2 "Clay-brick" 1 0
-"Wall" "West-external-wall" 3 10 0.2 "Clay-brick" 0 0
+Wall North-external-wall 3.0 10.0 0.2 Clay-brick 2 1
+Wall South-external-wall 3.0 10.0 0.2 Clay-brick 1 1
+Wall East-external-wall 3.0 10.0 0.2 Clay-brick 1 0
+Wall West-external-wall 3.0 10.0 0.2 Clay-brick 0 0
 
-"Wall" "Kitchen-living-partition" 3 5 0.15 "Concrete" 1 0
-"Wall" "Living-bedroom-partition" 3 5 0.15 "Concrete" 0 1
-"Wall" "Bedroom-bathroom-partition" 3 3 0.15 "Concrete" 0 1
-"Wall" "Kitchen-bathroom-partition" 3 5 0.15 "Concrete" 0 0
+Wall Kitchen-living-partition 3.0 5.0 0.15 Concrete 1 0
+Wall Living-bedroom-partition 3.0 5.0 0.15 Concrete 0 1
+Wall Bedroom-bathroom-partition 3.0 3.0 0.15 Concrete 0 1
+Wall Kitchen-bathroom-partition 3.0 5.0 0.15 Concrete 0 0
 
-"Window" "North-wall-window1" 1.2 1.5 "North-external-wall"
-"Window" "North-wall-window2" 1.0 1.0 "North-external-wall"
-"Window" "South-wall-window" 1.5 2.0 "South-external-wall"
-"Window" "East-wall-window" 1.0 1.2 "East-external-wall"
-"Window" "Kitchen-partition-window" 0.8 1.0 "Kitchen-living-partition"
+Window North-wall-window1 1.2 1.5 North-external-wall
+Window North-wall-window2 1.0 1.0 North-external-wall
+Window South-wall-window 1.5 2.0 South-external-wall
+Window East-wall-window 1.0 1.2 East-external-wall
+Window Kitchen-partition-window 0.8 1.0 Kitchen-living-partition
 
-"Door" "Main-entrance" 2.0 1.0 "South-external-wall"
-"Door" "Living-to-bedroom-door" 2.0 0.9 "Living-bedroom-partition"
-"Door" "Bedroom-to-bathroom-door" 2.0 0.8 "Bedroom-bathroom-partition"
+Door Main-entrance 2.0 1.0 South-external-wall
+Door Living-to-bedroom-door 2.0 0.9 Living-bedroom-partition
+Door Bedroom-to-bathroom-door 2.0 0.8 Bedroom-bathroom-partition
 
-"Wall" "Floor" 0.0 10 0.3 "Concrete" 0 0
-"Wall" "Ceiling" 0.0 10 0.3 "Concrete" 0 0
+Wall Floor 10.0 10.0 0.3 Concrete 0 0
+Wall Ceiling 10.0 10.0 0.3 Concrete 0 0
 
-"Brick" "Clay-brick" 0.065 0.215 0.102
-"Brick" "Concrete" 0.200 0.400 0.200
+Brick Clay-brick 0.065 0.215 0.102
+Brick Concrete 0.200 0.400 0.200
