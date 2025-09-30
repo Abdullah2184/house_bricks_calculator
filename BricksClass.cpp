@@ -17,7 +17,7 @@ class Bricks {
         std::string get_type() {
             return type;
         }
-        void update_num_req(int num_req) {
+        void set_num_req(int num_req) {
             num_bricks_req = num_req;
         }
         int get_num_req() {

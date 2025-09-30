@@ -315,10 +315,11 @@ void House::calculate_bricks() {
             //based on the total volume of wall and volume of brick
             //and passes it to the specific brick class
             std::cout << "Total volume: " << total_volume << " | " << "Brick volume: " << bricks_arr[i].get_volume() << "\n";
-            num_bricks += static_cast<int>(total_volume / bricks_arr[i].get_volume());
-            std::cout << "Number of bricks for this: " << num_bricks << "\n"; //DEBUGGING
-            bricks_arr[i].update_num_req(num_bricks);
+            int num_bricks_here = static_cast<int>(total_volume / bricks_arr[i].get_volume());
+            std::cout << "Number of bricks for this: " << num_bricks_here << "\n"; //DEBUGGING
         }
+        num_bricks = static_cast<int>(total_volume / bricks_arr[i].get_volume());
+        bricks_arr[i].set_num_req(num_bricks);
         house_data += "The number of " + bricks_arr[i].get_type() + " bricks required is : "; 
         house_data += std::to_string(bricks_arr[i].get_num_req()) + "\n";
         std::cout << "House info now: " << house_data << "\n";
