@@ -1,0 +1,90 @@
+#include <iostream>
+#include <string>
+#include <fstream>
+#include <cmath>
+#include <vector>
+#include <yaml-cpp/yaml.h>
+#include "WallsClass.h"
+#include "WindowsClass.h"
+#include "BricksClass.h"
+#include "DoorsClass.h"
+
+class House {
+    private:
+    std::string owner_name;
+    std::vector<Bricks> bricks_arr;
+    //int num_bricks_req; //Since the bricks will be of different types
+    std::vector<Walls> walls_arr;
+    std::vector<Windows> windows_arr;
+    std::vector<Doors> doors_arr;
+    std::string house_data; //holds all the data on the required bricks
+
+    public:
+    House();
+    House(std::string filename);
+    ~House();
+    void readHouseData(std::string filename);
+    bool readHouseYaml(const std::string &filename);
+    bool readMaterialsYaml(const std::string &filename);
+    // Perform brick counting only (counts bricks per brick type based on wall volumes)
+    void append_Wall(Walls new_wall);
+    void append_Window(Windows new_window);
+    void append_Door(Doors new_door);
+    void append_Brick(Bricks new_brick);
+    void displayHouseData();
+    void writeHouseData();
+    // Calculate material requirements (cement, water, sand) and costs from computed brick counts
+    void calculate_materials();
+    // Write a pre-computed resource summary to a YAML file (does not perform calculations)
+    bool writeOutputYaml(const std::string &outfile);
+    void set_name();
+    // Perform brick counting only (counts bricks per brick type based on wal
+    void calculate_bricks();
+
+    // Structures to hold calculation results (keeps calculation & I/O separated)
+    struct BrickEstimate {
+        std::string type;
+        int num = 0;
+        double unit_cost = 0.0;
+        double cost = 0.0;
+    };
+
+    struct ResourceSummary {
+        std::vector<BrickEstimate> bricks;
+        int total_bricks = 0;
+        double mortar_m3_base = 0.0;
+        double mortar_m3_with_waste = 0.0;
+        double cement_kg_base = 0.0;
+        double cement_kg_final = 0.0;
+        int cement_bags_5kg = 0;
+        double cement_cost = 0.0;
+        double water_l = 0.0;
+        double water_cost = 0.0;
+        double sand_m3 = 0.0;
+        double sand_kg = 0.0;
+        double sand_tonnes = 0.0;
+        double sand_cost = 0.0;
+        double total_cost = 0.0;
+    } summary;
+    
+    struct Materials {
+        double brick_cost = 0.0; // per piece
+        double cement_cost_per_5kg = 0.0; // currency per 5kg
+        double water_cost_per_litre = 0.0; // currency per litre
+        double cement_kg_per_1000_bricks = 70.0; // default assumption
+        // Optional, more accurate mortar-based calculation parameters
+        double mortar_m3_per_1000_bricks = 0.0; // m^3 of mortar required per 1000 bricks (if provided, used)
+        double cement_kg_per_m3_mortar = 300.0; // kg cement required per 1 m^3 mortar (typical)
+        double waste_factor = 0.0; // fraction of extra material to add (0.05 = 5% waste)
+        double water_l_per_kg_cement = 0.5; // default
+        // Sand-related parameters
+        double sand_m3_per_m3_mortar = 0.75; // m^3 sand required per 1 m^3 mortar (example default)
+        double sand_density_kg_per_m3 = 1600.0; // kg per m^3 (typical)
+        double sand_cost_per_tonne = 0.0; // currency per tonne
+    } materials;
+    // Note: units used throughout:
+    // - lengths: metres
+    // - brick_cost: currency per single brick (piece)
+    // - cement_cost_per_5kg: currency per 5kg bag
+    // - water_cost_per_litre: currency per litre
+};

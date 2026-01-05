@@ -1,53 +1,62 @@
-These instructions define the required format for Wall and Window dimension data in a .txt file to ensure correct parsing and processing by the program:
+This project now uses YAML-formatted inputs. There are two input files:
 
-**File Structure and Syntax Specification**
+- House dimensions (walls, windows, doors, bricks) — units in metres.
+- Materials and costs (brick cost, cement cost per 5kg, parameters) — units specified per field.
 
-The first line of the file must be a header.
+Example house YAML (see `house_example.yaml`):
 
-Subsequent lines contain object data in the specified format.
+owner: "Alice"
 
-Column values are space-separated.
+walls:
+	- id: W1
+		height: 3.0        # metres
+		width: 5.0         # metres
+		thickness: 0.2     # metres
+		brick_type: standard
+		windows: 1         # number of windows on this wall
+		doors: 1           # number of doors on this wall
 
-The Name column uniquely identifies each wall or window for clarity and ease of modification.
+windows:
+	- id: Win1
+		height: 1.2
+		width: 1.0
+		wall: W1           # reference to the associated wall id
 
-Brackets () for coordinates and double-quotes "" for strings must be included.
+doors:
+	- id: Door1
+		height: 2.0
+		width: 0.9
+		wall: W1
 
-For the walls, if it has windows or doors, there should be a 1 in the respective column,
-otherwise 0 
+bricks:
+	- id: standard
+		height: 0.065      # metres
+		width: 0.215       # metres
+		thickness: 0.1025  # metres
 
-**Coordinate System**
+Example materials YAML (see `materials_example.yaml`):
 
-All objects are projected onto an xy-plane.
+prices:
+	brick_cost: 0.50            # currency per brick (per piece)
+	cement_cost_per_5kg: 2.00  # currency per 5kg bag
+	water_cost_per_litre: 0.00 # currency per litre
 
-The origin (0,0) is set at the left-bottom corner of the wall.
+parameters:
+	cement_kg_per_1000_bricks: 70.0   # kg cement required per 1000 bricks (default assumption)
+	water_l_per_kg_cement: 0.5        # litres of water per kg of cement
+	# Optional parameters for a more accurate mortar-based calculation
+	mortar_m3_per_1000_bricks: 0.4   # m^3 mortar per 1000 bricks (example value)
+	cement_kg_per_m3_mortar: 300.0   # kg cement per m^3 mortar (depends on mix ratio)
+	waste_factor: 0.05               # 5% waste by default
+	sand_m3_per_m3_mortar: 0.75      # m^3 sand per 1 m^3 mortar (example)
+	sand_density_kg_per_m3: 1600.0   # kg per m^3 of sand
+	# Price fields
+	sand_cost_per_tonne: 20.0        # currency per tonne (example)
 
-Coordinates are specified in (x,y) form.
+Run the program as a CLI:
 
-**Measurements**
+calcbricks.exe -H house_example.yaml -m materials_example.yaml -o output.yaml
 
-Thickness is entered as a single numeric value.
+(Note: the CLI requires explicit `-H` and `-m` options; `-i` is no longer supported.)
 
-All measurements are in metres.
-
-**Object Specification**
-
-Walls: Specify coordinates for the left-top and right-bottom corners, along with thickness.
-
-Windows: Modeled in the same plane as the wall they belong to; thickness equals that of the associated wall.
-
-Roof and Floor: If made of bricks, treat as walls and include with type "Wall".
-
-Bricks: Keeping the brick with the longest side (length) in front, take the vertical distance as the
-height and the distance from the front-face to the back-face as the thickness
-
-**Line Format**
-
-Object-Type Object-Name Left-Top Right-Bottom Thickness
-
-**Examples:**
-//What if I only write specifically what I need (since the instruction document is also there)
-//eg. Wall Kitchen-cabinet-wall 10 10 2 Concrete
-//"Wall" "Kitchen-cabinet-wall" (0,10) (10,0) 2
-
-"Wall" "Kitchen-cabinet-wall" 10 10 2 "Concrete" 0 0
-"Window" "Front-french-windows" 5 5 "kitchen-cabinet-wall"
+The output YAML contains resource lines for `bricks`, `cement`, and `water` with quantities, units and costs.

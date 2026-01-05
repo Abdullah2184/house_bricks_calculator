@@ -1,4 +1,4 @@
-Object-Type Identifier Attributes
+Object-Type Identifier Attributes [Height, Width, Thickness, Material, ]
 Wall North-external-wall 3.0 10.0 0.2 Clay-brick 2 1
 Wall South-external-wall 3.0 10.0 0.2 Clay-brick 1 1
 Wall East-external-wall 3.0 10.0 0.2 Clay-brick 1 0

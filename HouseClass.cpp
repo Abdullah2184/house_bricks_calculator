@@ -1,59 +1,16 @@
-#include <iostream>
-#include <string>
-#include <fstream>
-#include "WallsClass.cpp"
-#include "WindowsClass.cpp"
-#include "BricksClass.cpp"
-#include "DoorsClass.cpp"
+#include "HouseClass.h"
 
-class House {
-    private:
-    std::string owner_name;
-    Bricks* bricks_arr;
-    int num_bricks_types;
-    //int num_bricks_req; //Since the bricks will be of different types
-    Walls* walls_arr;
-    int num_walls;
-    Windows* windows_arr;
-    int num_windows;
-    Doors* doors_arr;
-    int num_doors;
-    std::string house_data; //holds all the data on the required bricks
-
-    public:
-    House();
-    House(std::string filename);
-    ~House();
-    void readHouseData(std::string filename);
-    void append_Wall(Walls new_wall);
-    void append_Window(Windows new_window);
-    void append_Door(Doors new_door);
-    void append_Brick(Bricks new_brick);
-    void displayHouseData();
-    void writeHouseData();
-    void set_name();
-    void calculate_bricks();
-};
 
 House::House() {
     owner_name = "";
-    bricks_arr = nullptr;
-    num_bricks_types = 0;
+    // vectors are default-initialized empty
     //num_bricks_req = 0;
-    walls_arr = nullptr;
-    num_walls = 0;
-    windows_arr = nullptr;
-    num_windows = 0;
-    doors_arr = nullptr;
-    num_doors = 0;
+    // vectors are default-initialized empty
     house_data = "";
 }
 
 House::~House() {
-    delete[] bricks_arr;
-    delete[] walls_arr;
-    delete[] windows_arr;
-    delete[] doors_arr;
+    // vectors cleanup automatically
 }
 
 void House::readHouseData(std::string filename) {
@@ -130,133 +87,267 @@ void House::readHouseData(std::string filename) {
     infile.close();
 }
 
+// Read house description from a YAML file. Expected structure:
+// owner: Name
+// walls: [ {id, height, width, thickness, brick_type, windows, doors}, ... ]
+// windows: [ {id, height, width, wall}, ... ]
+// doors: [ {id, height, width, wall}, ... ]
+// bricks: [ {id, height, width, thickness}, ... ]
+bool House::readHouseYaml(const std::string &filename) {
+    try {
+        YAML::Node root = YAML::LoadFile(filename);
+
+        if (root["owner"]) owner_name = root["owner"].as<std::string>();
+
+        // Clear existing arrays (simple deallocation and reset)
+        walls_arr.clear();
+        windows_arr.clear();
+        doors_arr.clear();
+        bricks_arr.clear();
+
+        if (root["walls"]) {
+            for (auto node : root["walls"]) {
+                std::string id = node["id"].as<std::string>();
+                double h = node["height"].as<double>();
+                double w = node["width"].as<double>();
+                double t = node["thickness"].as<double>();
+                std::string btype = node["brick_type"].as<std::string>();
+                bool has_win = false, has_door = false;
+                if (node["windows"]) has_win = node["windows"].as<int>() > 0;
+                if (node["doors"]) has_door = node["doors"].as<int>() > 0;
+                append_Wall( Walls(id,h,w,t,btype,has_win,has_door) );
+            }
+        }
+
+        if (root["windows"]) {
+            for (auto node : root["windows"]) {
+                std::string id = node["id"].as<std::string>();
+                double h = node["height"].as<double>();
+                double w = node["width"].as<double>();
+                std::string wall = node["wall"].as<std::string>();
+                // Verify associated wall exists
+                    bool found = false;
+                    for (const auto &wl : walls_arr) if (wl.get_identifier() == wall) { found = true; break; }
+                if (!found) {
+                    std::cerr << "Error: window '"<<id<<"' references unknown wall '"<<wall<<"'\n";
+                    return false;
+                }
+                append_Window( Windows(id,h,w,wall) );
+            }
+        }
+
+        if (root["doors"]) {
+            for (auto node : root["doors"]) {
+                std::string id = node["id"].as<std::string>();
+                double h = node["height"].as<double>();
+                double w = node["width"].as<double>();
+                std::string wall = node["wall"].as<std::string>();
+                bool found = false;
+                for (const auto &wl : walls_arr) if (wl.get_identifier() == wall) { found = true; break; }
+                if (!found) {
+                    std::cerr << "Error: door '"<<id<<"' references unknown wall '"<<wall<<"'\n";
+                    return false;
+                }
+                append_Door( Doors(id,h,w,wall) );
+            }
+        }
+
+        if (root["bricks"]) {
+            for (auto node : root["bricks"]) {
+                std::string id = node["id"].as<std::string>();
+                double h = node["height"].as<double>();
+                double w = node["width"].as<double>();
+                double t = node["thickness"].as<double>();
+                append_Brick( Bricks(id,h,w,t) );
+            }
+        }
+
+    } catch (const YAML::Exception &e) {
+        std::cerr << "YAML parse error: " << e.what() << std::endl;
+        return false;
+    }
+    return true;
+}
+
+// Read materials and cost parameters from YAML.
+// Expected fields: prices.brick_cost (per piece), prices.cement_cost_per_5kg, prices.water_cost_per_litre
+// parameters.cement_kg_per_1000_bricks, parameters.water_l_per_kg_cement
+bool House::readMaterialsYaml(const std::string &filename) {
+    try {
+        YAML::Node root = YAML::LoadFile(filename);
+        if (root["prices"]) {
+            auto p = root["prices"];
+            if (p["brick_cost"]) materials.brick_cost = p["brick_cost"].as<double>();
+            if (p["cement_cost_per_5kg"]) materials.cement_cost_per_5kg = p["cement_cost_per_5kg"].as<double>();
+            if (p["water_cost_per_litre"]) materials.water_cost_per_litre = p["water_cost_per_litre"].as<double>();
+            if (p["sand_cost_per_tonne"]) materials.sand_cost_per_tonne = p["sand_cost_per_tonne"].as<double>();
+        }
+        if (root["parameters"]) {
+            auto p = root["parameters"];
+                if (p["cement_kg_per_1000_bricks"]) materials.cement_kg_per_1000_bricks = p["cement_kg_per_1000_bricks"].as<double>();
+                if (p["water_l_per_kg_cement"]) materials.water_l_per_kg_cement = p["water_l_per_kg_cement"].as<double>();
+                if (p["mortar_m3_per_1000_bricks"]) materials.mortar_m3_per_1000_bricks = p["mortar_m3_per_1000_bricks"].as<double>();
+                if (p["cement_kg_per_m3_mortar"]) materials.cement_kg_per_m3_mortar = p["cement_kg_per_m3_mortar"].as<double>();
+                if (p["waste_factor"]) materials.waste_factor = p["waste_factor"].as<double>();
+            if (p["sand_m3_per_m3_mortar"]) materials.sand_m3_per_m3_mortar = p["sand_m3_per_m3_mortar"].as<double>();
+            if (p["sand_density_kg_per_m3"]) materials.sand_density_kg_per_m3 = p["sand_density_kg_per_m3"].as<double>();
+        }
+    } catch (const YAML::Exception &e) {
+        std::cerr << "YAML parse error (materials): " << e.what() << std::endl;
+        return false;
+    }
+    return true;
+}
+
 void House::append_Wall(Walls new_wall) {
-    //Takes in the current walls array, resizes it by dynamically allocating
-    //a new array of size num_walls + 1, copies the old array to the new one,
-    //appends the new wall to the end, deletes the old array, and updates
-    //the pointer and num_walls variable
-    
-    //If the pointer array hasn't been created (first append call): 
-    if (!walls_arr) {
-        walls_arr = new Walls[1];
-        walls_arr[0] = new_wall;
-        num_walls = 1;
-        return;
-    }
-
-
-    Walls* new_arr = new Walls[num_walls+1];
-    for (int i=0; i<num_walls; i++) {
-        new_arr[i] = walls_arr[i];
-    }
-
-    //works
-    new_arr[num_walls] = new_wall;
-
-    //works
-    delete[] walls_arr;
-    walls_arr = new_arr;
-    num_walls++;
-    std::cout << "Appending Wall, identifier\n"; //DEBUGGING
-
+    // Push the new wall into the container. Simple and exception-safe.
+    walls_arr.push_back(new_wall);
+    std::cout << "Appending Wall: " << new_wall.get_identifier() << "\n"; // DEBUG
 }
 
 void House::append_Window(Windows new_window) {
-    //Same as append_Wall but for windows
-    if (!windows_arr) {
-        windows_arr = new Windows[1];
-        windows_arr[0] = new_window;
-        num_windows = 1;
-        return;
-    }
-
-    Windows* new_arr = new Windows[num_windows+1];
-    for (int i=0; i<num_windows; i++) {
-        new_arr[i] = windows_arr[i];
-    }
-
-    //works
-    new_arr[num_windows] = new_window;
-
-    //works
-    delete[] windows_arr;
-    windows_arr = new_arr;
-    num_windows++;
-    std::cout << "Appending Window, identifier\n"; //DEBUGGING
+    windows_arr.push_back(new_window);
+    std::cout << "Appending Window: " << new_window.get_identifier() << "\n"; // DEBUG
 }
 
 void House::append_Door(Doors new_door) {
-    if (!doors_arr) {
-        doors_arr = new Doors[1];
-        doors_arr[0] = new_door;
-        num_doors = 1;
-        return;
-    }
-    
-    //Same as append_Wall but for doors
-    Doors* new_arr = new Doors[num_doors+1];
-    for (int i=0; i<num_doors; i++) {
-        new_arr[i] = doors_arr[i];
-    }
-
-    //works
-    new_arr[num_doors] = new_door;
-
-    //works
-    delete[] doors_arr;
-    doors_arr = new_arr;
-    num_doors++;
-    std::cout << "Appending Door, identifier\n"; //DEBUGGING
+    doors_arr.push_back(new_door);
+    std::cout << "Appending Door: " << new_door.get_identifier() << "\n"; // DEBUG
 }
 
 void House::append_Brick(Bricks new_brick) {
-    //Same as append_Wall but for bricks
+    bricks_arr.push_back(new_brick);
+    std::cout << "Appending Brick: " << new_brick.get_type() << "\n"; // DEBUG
+}
+    
 
-    if (!doors_arr) {
-        bricks_arr = new Bricks[1];
-        bricks_arr[0] = new_brick;
-        num_windows = 1;
-        return;
+// Calculate material requirements from previously calculated brick counts.
+// This method fills `summary` with per-brick counts, total bricks and derived material quantities and costs.
+void House::calculate_materials() {
+    // Reset summary
+    summary = ResourceSummary();
+
+    // Bricks: collect estimates and accumulate total
+    for (size_t i = 0; i < bricks_arr.size(); ++i) {
+        BrickEstimate be;
+        be.type = bricks_arr[i].get_type();
+        be.num = bricks_arr[i].get_num_req();
+        be.unit_cost = materials.brick_cost;
+        be.cost = be.num * be.unit_cost;
+        summary.bricks.push_back(be);
+        summary.total_bricks += be.num;
+        summary.total_cost += be.cost;
     }
 
-    Bricks* new_arr = new Bricks[num_bricks_types+1];
-    for (int i=0; i<num_bricks_types; i++) {
-        new_arr[i] = bricks_arr[i];
+    // Mortar & Cement base calculations
+    double mortar_m3_base = 0.0;
+    double cement_kg_base = 0.0;
+    if (materials.mortar_m3_per_1000_bricks > 0.0) {
+        mortar_m3_base = (summary.total_bricks / 1000.0) * materials.mortar_m3_per_1000_bricks;
+        cement_kg_base = mortar_m3_base * materials.cement_kg_per_m3_mortar;
+    } else {
+        // Fallback: use kg per 1000 bricks for base cement, infer mortar if possible
+        cement_kg_base = (summary.total_bricks / 1000.0) * materials.cement_kg_per_1000_bricks;
+        if (materials.cement_kg_per_m3_mortar > 0.0) {
+            mortar_m3_base = cement_kg_base / materials.cement_kg_per_m3_mortar;
+        }
     }
 
-    //works
-    new_arr[num_bricks_types] = new_brick;
+    // Apply waste (user-configurable) and compute final cement quantity & cost
+    summary.mortar_m3_base = mortar_m3_base;
+    summary.mortar_m3_with_waste = mortar_m3_base * (1.0 + materials.waste_factor);
+    summary.cement_kg_base = cement_kg_base;
+    summary.cement_kg_final = std::ceil(cement_kg_base * (1.0 + materials.waste_factor));
+    summary.cement_bags_5kg = static_cast<int>(std::ceil(summary.cement_kg_final / 5.0));
+    summary.cement_cost = summary.cement_bags_5kg * materials.cement_cost_per_5kg;
+    summary.total_cost += summary.cement_cost;
 
-    //works
-    delete[] bricks_arr;
-    bricks_arr = new_arr;
-    std::cout << ++num_bricks_types;
+    // Water calculation: use base cement kg and then apply waste once
+    summary.water_l = cement_kg_base * materials.water_l_per_kg_cement * (1.0 + materials.waste_factor);
+    summary.water_cost = summary.water_l * materials.water_cost_per_litre;
+    summary.total_cost += summary.water_cost;
 
-    std::cout << "Appending Brick, identifier\n"; //DEBUGGING
+    // Sand calculation (if mortar known): convert to mass and compute cost
+    if (mortar_m3_base > 0.0) {
+        double sand_m3_base = mortar_m3_base * materials.sand_m3_per_m3_mortar;
+        summary.sand_m3 = sand_m3_base * (1.0 + materials.waste_factor);
+        summary.sand_kg = summary.sand_m3 * materials.sand_density_kg_per_m3;
+        summary.sand_tonnes = summary.sand_kg / 1000.0;
+        summary.sand_cost = summary.sand_tonnes * materials.sand_cost_per_tonne;
+        summary.total_cost += summary.sand_cost;
+    }
 }
 
-void House::displayHouseData() {
-    //Displays a summary of the house plan, and a final verdict on the bricks required
-    std::cout << "Going to print the data now:\n"; //DEBUGGING
-    std::cout << house_data << "\n"; 
-}
-
-void House::writeHouseData() {
-    //Take the filename as input
-    std::string filename;
-    std::cout << "Enter the filename: ";
-    std::cin >> filename;
-    std::ofstream outfile(filename);
-
-    if (!outfile) {
-        std::cerr << "Error opening file: " << filename << std::endl;
-        return;
+bool House::writeOutputYaml(const std::string &outfile) {
+    // Write a pre-computed ResourceSummary to YAML. It does NOT perform calculations.
+    if (summary.total_bricks == 0 && summary.bricks.empty()) {
+        std::cerr << "Error: resource summary is empty. Run calculate_bricks() and calculate_materials() before writing output." << std::endl;
+        return false;
     }
 
-    //Writes the formatted data to the file
-    //Writes each attribute of the house in a structured format
+    YAML::Emitter out;
+    out << YAML::BeginMap;
+    out << YAML::Key << "owner" << YAML::Value << owner_name;
+    out << YAML::Key << "resources" << YAML::Value << YAML::BeginMap;
 
-    outfile.close();
+    // Bricks
+    out << YAML::Key << "bricks" << YAML::Value << YAML::BeginSeq;
+    for (const auto &be : summary.bricks) {
+        out << YAML::BeginMap;
+        out << YAML::Key << "type" << YAML::Value << be.type;
+        out << YAML::Key << "num" << YAML::Value << be.num;
+        out << YAML::Key << "unit" << YAML::Value << "piece";
+        out << YAML::Key << "unit_cost" << YAML::Value << be.unit_cost;
+        out << YAML::Key << "cost" << YAML::Value << be.cost;
+        out << YAML::EndMap;
+    }
+    out << YAML::EndSeq;
+
+    // Cement
+    out << YAML::Key << "cement" << YAML::Value << YAML::BeginMap;
+    out << YAML::Key << "kg" << YAML::Value << summary.cement_kg_final;
+    out << YAML::Key << "kg_base" << YAML::Value << summary.cement_kg_base;
+    out << YAML::Key << "unit" << YAML::Value << "5kg_bag";
+    out << YAML::Key << "bags_5kg" << YAML::Value << summary.cement_bags_5kg;
+    out << YAML::Key << "unit_cost" << YAML::Value << materials.cement_cost_per_5kg;
+    out << YAML::Key << "cost" << YAML::Value << summary.cement_cost;
+    out << YAML::EndMap;
+
+    // Water
+    out << YAML::Key << "water" << YAML::Value << YAML::BeginMap;
+    out << YAML::Key << "litres" << YAML::Value << summary.water_l;
+    out << YAML::Key << "unit" << YAML::Value << "litre";
+    out << YAML::Key << "unit_cost" << YAML::Value << materials.water_cost_per_litre;
+    out << YAML::Key << "cost" << YAML::Value << summary.water_cost;
+    out << YAML::EndMap;
+
+    // Mortar
+    out << YAML::Key << "mortar" << YAML::Value << YAML::BeginMap;
+    out << YAML::Key << "m3_base" << YAML::Value << summary.mortar_m3_base;
+    out << YAML::Key << "m3_with_waste" << YAML::Value << summary.mortar_m3_with_waste;
+    out << YAML::EndMap;
+
+    // Sand
+    out << YAML::Key << "sand" << YAML::Value << YAML::BeginMap;
+    out << YAML::Key << "m3" << YAML::Value << summary.sand_m3;
+    out << YAML::Key << "kg" << YAML::Value << summary.sand_kg;
+    out << YAML::Key << "tonnes" << YAML::Value << summary.sand_tonnes;
+    out << YAML::Key << "unit_cost_per_tonne" << YAML::Value << materials.sand_cost_per_tonne;
+    out << YAML::Key << "cost" << YAML::Value << summary.sand_cost;
+    out << YAML::EndMap;
+
+    out << YAML::Key << "total_cost" << YAML::Value << summary.total_cost;
+    out << YAML::EndMap; // resources
+    out << YAML::EndMap; // root
+
+    std::ofstream ofs(outfile);
+    if (!ofs) {
+        std::cerr << "Error opening output file: " << outfile << std::endl;
+        return false;
+    }
+    ofs << out.c_str();
+    ofs.close();
+    return true;
 }
 
 void House::set_name() {
@@ -265,61 +356,55 @@ void House::set_name() {
 
 //pseudo-code to implement logic, then will name everything properly 
 void House::calculate_bricks() {
-    std::cout << "Entered the function: "<< num_bricks_types << "\n"; //DEBUGGING
-    //Loops through the bricks
-    for (int i=0; i<num_bricks_types; i++) {
-        //Loops through the walls
+    std::cout << "Entered calculate_bricks()\n"; // DEBUGGING
+    // For each brick type, accumulate adjusted wall volume (subtract openings) and convert to number of bricks
+    for (size_t i = 0; i < bricks_arr.size(); ++i) {
         int num_bricks = 0;
-        std::cout << "Calculating for brick type: " << bricks_arr[i].get_type() << "\n"; //DEBUGGING
-        double total_volume = 0;
-        std::cout << "Number of walls:  " << num_walls << "\n"; //DEBUGGING 
-        for (int j=0; j<num_walls;j++) {
-            //If the types match, add to the number of bricks of this type required
-            std::cout << "Calculating for wall: " << walls_arr[j].get_identifier() << " | " << walls_arr[j].get_brick_type() << "\n";
+        std::cout << "Calculating for brick type: " << bricks_arr[i].get_type() << "\n"; // DEBUG
+        double total_volume = 0.0;
+        std::cout << "Number of walls: " << walls_arr.size() << "\n"; // DEBUG
+
+        for (size_t j = 0; j < walls_arr.size(); ++j) {
+            std::cout << "Checking wall: " << walls_arr[j].get_identifier() << " (brick_type=" << walls_arr[j].get_brick_type() << ")\n";
             if (bricks_arr[i].get_type() != walls_arr[j].get_brick_type()) {
-                std::cout << "Number of bricks for this: " << num_bricks << "\n"; //DEBUGGING
                 continue;
             }
-            
-            std::cout << "Wall matched: " << walls_arr[j].get_identifier() << "\n"; //DEBUGGING
-            //have to round upwards, not downwards (default)
-            //Calculate the volume of the wall and add it to the total volume
-            total_volume += walls_arr[j].get_volume();
-            std::cout << "Volume now from the wall: " << total_volume << "\n"; //DEBUGGING
 
-            //If the wall has a window or door, find it by looping,
-            // through the array and calculate dimensions
-            //and subtract that volume frrom the volume
+            // Add wall volume
+            double wall_vol = walls_arr[j].get_volume();
+
+            // Subtract windows volume attached to this wall
             if (walls_arr[j].has_window) {
-                std::cout << "Wall has window(s): " << walls_arr[j].get_identifier() << "\n"; //DEBUGGING
-                for (int k=0; k < num_windows; k++) {
-                    if (walls_arr[j].get_identifier() == windows_arr[k].get_asc_wall()) {
-                        //multiples the area of the window with the thickness of the wall
-                        //to get a proper estimate of the volume subtracted by the window
-                        total_volume -= ( (windows_arr[k].get_area())*(walls_arr[j].get_thickness()) );
-                        std::cout << "Volume now after subtracting windows: " << total_volume << "\n"; //DEBUGGING
+                for (const auto &win : windows_arr) {
+                    if (walls_arr[j].get_identifier() == win.get_asc_wall()) {
+                        wall_vol -= (win.get_area() * walls_arr[j].get_thickness());
                     }
                 }
             }
+
+            // Subtract doors volume attached to this wall
             if (walls_arr[j].has_door) {
-                for (int k=0; k<num_doors; k++) {
-                    if (walls_arr[j].get_identifier() == doors_arr[k].get_asc_wall()) {
-                        //multiples the area of the window with the thickness of the wall
-                        //to get a proper estimate of the volume subtracted by the window
-                        total_volume -= ( (doors_arr[k].get_area())*(walls_arr[j].get_thickness()) );
-                        std::cout << "Volume now after subtracting doors: " << total_volume << "\n"; //DEBUGGING
+                for (const auto &door : doors_arr) {
+                    if (walls_arr[j].get_identifier() == door.get_asc_wall()) {
+                        wall_vol -= (door.get_area() * walls_arr[j].get_thickness());
                     }
                 }
             }
-            //Now calculates the number of this type of bricks required
-            //based on the total volume of wall and volume of brick
-            //and passes it to the specific brick class
-            std::cout << "Total volume: " << total_volume << " | " << "Brick volume: " << bricks_arr[i].get_volume() << "\n";
-            int num_bricks_here = static_cast<int>(total_volume / bricks_arr[i].get_volume());
-            std::cout << "Number of bricks for this: " << num_bricks_here << "\n"; //DEBUGGING
+
+            total_volume += wall_vol;
+            std::cout << "Accumulated volume after wall " << walls_arr[j].get_identifier() << ": " << total_volume << "\n";
         }
-        num_bricks = static_cast<int>(total_volume / bricks_arr[i].get_volume());
+
+        // Calculate bricks required for this brick type (round up)
+        if (bricks_arr[i].get_volume() <= 0.0) {
+            std::cerr << "Error: brick volume for type '" << bricks_arr[i].get_type() << "' is zero or negative.\n";
+            bricks_arr[i].set_num_req(0);
+            continue;
+        }
+
+        num_bricks = static_cast<int>( std::ceil(total_volume / bricks_arr[i].get_volume()) );
         bricks_arr[i].set_num_req(num_bricks);
+
         house_data += "The number of " + bricks_arr[i].get_type() + " bricks required is : "; 
         house_data += std::to_string(bricks_arr[i].get_num_req()) + "\n";
         std::cout << "House info now: " << house_data << "\n";

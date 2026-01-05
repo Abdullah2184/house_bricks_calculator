@@ -1,0 +1,35 @@
+owner: "Alice"
+
+walls:
+  - id: W1
+    height: 3.0
+    width: 5.0
+    thickness: 0.2
+    brick_type: standard
+    windows: 1
+    doors: 1
+  - id: W2
+    height: 3.0
+    width: 4.0
+    thickness: 0.2
+    brick_type: standard
+    windows: 0
+    doors: 0
+
+windows:
+  - id: Win1
+    height: 1.2
+    width: 1.0
+    wall: W1
+
+doors:
+  - id: Door1
+    height: 2.0
+    width: 0.9
+    wall: W1
+
+bricks:
+  - id: standard
+    height: 0.065
+    width: 0.215
+    thickness: 0.1025
