@@ -1,0 +1,30 @@
+owner: Alice
+resources:
+  bricks:
+    - type: standard
+      num: 3351
+      unit: piece
+      unit_cost: 0.5
+      cost: 1675.5
+  cement:
+    kg: 423
+    kg_base: 402.12
+    unit: 5kg_bag
+    bags_5kg: 85
+    unit_cost: 2
+    cost: 170
+  water:
+    litres: 211.113
+    unit: litre
+    unit_cost: 0
+    cost: 0
+  mortar:
+    m3_base: 1.3404
+    m3_with_waste: 1.4074200000000001
+  sand:
+    m3: 1.0555650000000001
+    kg: 1688.9040000000002
+    tonnes: 1.6889040000000002
+    unit_cost_per_tonne: 20
+    cost: 33.778080000000003
+  total_cost: 1879.27808

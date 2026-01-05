@@ -23,10 +23,6 @@ FetchContent_MakeAvailable(yaml-cpp)
 add_executable(calcbricks
     main.cpp
     HouseClass.cpp
-    WallsClass.cpp
-    WindowsClass.cpp
-    DoorsClass.cpp
-    BricksClass.cpp
 )
 
 # 3. Link correctly

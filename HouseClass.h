@@ -1,3 +1,6 @@
+#ifndef HOUSECLASS_H // Header Guard
+#define HOUSECLASS_H
+
 #include <iostream>
 #include <string>
 #include <fstream>
@@ -13,11 +16,10 @@ class House {
     private:
     std::string owner_name;
     std::vector<Bricks> bricks_arr;
-    //int num_bricks_req; //Since the bricks will be of different types
     std::vector<Walls> walls_arr;
     std::vector<Windows> windows_arr;
     std::vector<Doors> doors_arr;
-    std::string house_data; //holds all the data on the required bricks
+    std::string house_data;
 
     public:
     House();
@@ -26,7 +28,6 @@ class House {
     void readHouseData(std::string filename);
     bool readHouseYaml(const std::string &filename);
     bool readMaterialsYaml(const std::string &filename);
-    // Perform brick counting only (counts bricks per brick type based on wall volumes)
     void append_Wall(Walls new_wall);
     void append_Window(Windows new_window);
     void append_Door(Doors new_door);
@@ -88,3 +89,5 @@ class House {
     // - cement_cost_per_5kg: currency per 5kg bag
     // - water_cost_per_litre: currency per litre
 };
+
+#endif

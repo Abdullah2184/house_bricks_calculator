@@ -1,6 +1,6 @@
 #include <iostream>
 #include <string>
-#include "HouseClass.cpp"
+#include "HouseClass.h"
 #include <yaml-cpp/yaml.h>
 
 static void usage(const char *prog) {

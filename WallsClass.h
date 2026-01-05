@@ -1,3 +1,5 @@
+#ifndef WALLSCLASS_H
+#define WALLSCLASS_H
 #include <string>
 
 class Walls {
@@ -24,3 +26,5 @@ public:
     double get_volume() const { return height * width * thickness; }
     const std::string &get_brick_type() const { return brick_type; }
 };
+
+#endif

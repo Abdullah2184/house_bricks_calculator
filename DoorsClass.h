@@ -1,3 +1,6 @@
+#ifndef DOORSCLASS_H //Header Guard
+#define DOORSCLASS_H
+
 #include <string>
 
 class Doors {
@@ -18,3 +21,5 @@ public:
     const std::string &get_asc_wall() const { return associated_wall; }
     double get_area() const { return height * width; }
 };
+
+#endif
