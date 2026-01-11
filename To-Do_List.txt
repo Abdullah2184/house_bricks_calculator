@@ -1,0 +1,33 @@
+Validation rules (contractor-grade, non-negotiable)
+These are the minimum validations professionals expect:
+Geometry validations
+Wall height, width, thickness > 0
+Window/door dimensions > 0
+Opening area ≤ wall area
+Referential integrity
+Window/door wall must exist
+Wall brick_type must exist
+Brick must define rate for wall thickness
+Domain validations
+bricks_per_m2 must exist for that bond + thickness
+mortar_m3_per_1000_bricks > 0
+Cement bag size must be positive
+Waste factors ∈ [0, 0.25] (realistic upper bound)
+Errors should stop execution, not warn and continue.
+
+This will probably require a stack to implement history-management
+Parametric “what-if” analysis
+"change -o [brick] -id [brick id] -h/w/t/bond [new_value]"
+Recalculates (with a copy) and shows difference only on the console for relevant outputs
+"rollback [all]" deletes copy
+"rollback last"
+"change [and so on]" will make further changes (to the copy if not deleted, else create new copy from the original)
+"replace" Should update output file as well as input file to maintain consistency
+
+Software won't fail if certain measurements are missing (robust error handling), 
+but will not give outputs where the outputs depend on those measurements.
+
+default files for all three input files; but can be overriden by command line arguments
+will have a downloadable regional library available on the github repo
+
+implement logging for manual auditing of the calculations

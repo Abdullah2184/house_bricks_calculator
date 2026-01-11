@@ -1,0 +1,17 @@
+#Different bonds require different numbers of bricks per m² for the same wall thickness.
+#Brick bond must be part of the brick definition
+#Bricks-per-m² must be bond- and thickness-dependent
+#Mortar rate must be bond-dependent
+bricks:
+  - id: standard
+    bond: stretcher
+    size:
+      length: 0.215
+      height: 0.065
+      width: 0.1025
+    unit_cost: 0.50
+    bricks_per_m2:
+      "0.1025": 60
+      "0.20": 120
+    mortar_m3_per_1000_bricks: 0.45
+
