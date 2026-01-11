@@ -361,18 +361,20 @@ void House::calculate_materials() {
 
 
 bool House::writeOutputYaml(const std::string &outfile) {
-    // Write a pre-computed ResourceSummary to YAML. It does NOT perform calculations.
+    // Ensure calculations are done
     if (summary.total_bricks == 0 && summary.bricks.empty()) {
-        std::cerr << "Error: resource summary is empty. Run calculate_bricks() and calculate_materials() before writing output." << std::endl;
+        std::cerr << "Error: resource summary is empty. Run calculate_bricks() and calculate_materials() first." << std::endl;
         return false;
     }
 
     YAML::Emitter out;
     out << YAML::BeginMap;
+
     out << YAML::Key << "owner" << YAML::Value << owner_name;
+
     out << YAML::Key << "resources" << YAML::Value << YAML::BeginMap;
 
-    // Bricks
+    // --- Bricks ---
     out << YAML::Key << "bricks" << YAML::Value << YAML::BeginSeq;
     for (const auto &be : summary.bricks) {
         out << YAML::BeginMap;
@@ -385,17 +387,17 @@ bool House::writeOutputYaml(const std::string &outfile) {
     }
     out << YAML::EndSeq;
 
-    // Cement
+    // --- Cement ---
     out << YAML::Key << "cement" << YAML::Value << YAML::BeginMap;
-    out << YAML::Key << "kg" << YAML::Value << summary.cement_kg_final;
     out << YAML::Key << "kg_base" << YAML::Value << summary.cement_kg_base;
-    out << YAML::Key << "unit" << YAML::Value << "5kg_bag";
-    out << YAML::Key << "bags_5kg" << YAML::Value << materials.cement_bag_kg;
-    out << YAML::Key << "unit_cost" << YAML::Value << materials.cement_cost_per_bag;
+    out << YAML::Key << "kg_final" << YAML::Value << summary.cement_kg_final;
+    out << YAML::Key << "bag_size_kg" << YAML::Value << materials.cement_bag_kg;
+    out << YAML::Key << "bags_needed" << YAML::Value << summary.cement_bags;
+    out << YAML::Key << "unit_cost_per_bag" << YAML::Value << materials.cement_cost_per_bag;
     out << YAML::Key << "cost" << YAML::Value << summary.cement_cost;
     out << YAML::EndMap;
 
-    // Water
+    // --- Water ---
     out << YAML::Key << "water" << YAML::Value << YAML::BeginMap;
     out << YAML::Key << "litres" << YAML::Value << summary.water_l;
     out << YAML::Key << "unit" << YAML::Value << "litre";
@@ -403,13 +405,13 @@ bool House::writeOutputYaml(const std::string &outfile) {
     out << YAML::Key << "cost" << YAML::Value << summary.water_cost;
     out << YAML::EndMap;
 
-    // Mortar
+    // --- Mortar ---
     out << YAML::Key << "mortar" << YAML::Value << YAML::BeginMap;
     out << YAML::Key << "m3_base" << YAML::Value << summary.mortar_m3_base;
     out << YAML::Key << "m3_with_waste" << YAML::Value << summary.mortar_m3_with_waste;
     out << YAML::EndMap;
 
-    // Sand
+    // --- Sand ---
     out << YAML::Key << "sand" << YAML::Value << YAML::BeginMap;
     out << YAML::Key << "m3" << YAML::Value << summary.sand_m3;
     out << YAML::Key << "kg" << YAML::Value << summary.sand_kg;
@@ -418,10 +420,13 @@ bool House::writeOutputYaml(const std::string &outfile) {
     out << YAML::Key << "cost" << YAML::Value << summary.sand_cost;
     out << YAML::EndMap;
 
+    // --- Total ---
     out << YAML::Key << "total_cost" << YAML::Value << summary.total_cost;
-    out << YAML::EndMap; // resources
-    out << YAML::EndMap; // root
 
+    out << YAML::EndMap; // end resources
+    out << YAML::EndMap; // end root
+
+    // Write to file
     std::ofstream ofs(outfile);
     if (!ofs) {
         std::cerr << "Error opening output file: " << outfile << std::endl;
@@ -431,6 +436,7 @@ bool House::writeOutputYaml(const std::string &outfile) {
     ofs.close();
     return true;
 }
+
 
 void House::set_name() {
     std::cout << "Enter the owner's name: "; std::cin >> owner_name;
