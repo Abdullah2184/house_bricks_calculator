@@ -13,7 +13,7 @@
 #include "DoorsClass.h"
 
 class House {
-    private:
+    public:
     std::string owner_name;
     std::vector<Bricks> bricks_arr;
     std::vector<Walls> walls_arr;
@@ -27,7 +27,10 @@ class House {
     ~House();
     void readHouseData(std::string filename);
     bool readHouseYaml(const std::string &filename);
-    bool House::readBricksYAML(const std::string &filename);
+    bool parseHouseYaml(const YAML::Node &root);
+    bool readBricksYAML(const std::string &filename);
+    bool parseBricksYAML(const YAML::Node &root);
+    bool parseMaterialsYAML(const YAML::Node &root);
     bool readMaterialsYaml(const std::string &filename);
     void append_Wall(Walls new_wall);
     void append_Window(Windows new_window);

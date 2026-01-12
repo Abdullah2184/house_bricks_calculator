@@ -90,16 +90,23 @@ void House::readHouseData(std::string filename) {
 }
 */
 
+bool House::readHouseYaml(const std::string& path) {
+    try {
+        YAML::Node root = YAML::LoadFile(path);
+        return parseHouseYaml(root);
+    } catch (...) {
+        return false;
+    }
+}
+
 // Read house description from a YAML file. Expected structure:
 // owner: Name
 // walls: [ {id, height, width, thickness, brick_type, windows, doors}, ... ]
 // windows: [ {id, height, width, wall}, ... ]
 // doors: [ {id, height, width, wall}, ... ]
 // bricks: [ {id, height, width, thickness}, ... ]
-bool House::readHouseYaml(const std::string &filename) {
+bool House::parseHouseYaml(const YAML::Node &root) {
     try {
-        YAML::Node root = YAML::LoadFile(filename);
-
         if (!root["owner"])
             VALIDATION_ERROR("Missing owner field");
 
@@ -123,7 +130,10 @@ bool House::readHouseYaml(const std::string &filename) {
 
             if (h <= 0 || w <= 0 || t <= 0)
                 VALIDATION_ERROR("Wall " + id + " has non-positive dimensions");
-
+            if (btype.empty())
+                VALIDATION_ERROR("Wall " + id + " has empty brick_type");
+            if (find_brick_by_id(btype) == nullptr)
+                VALIDATION_ERROR("Wall " + id + " references unknown brick_type " + btype);
             append_Wall(Walls(id, h, w, t, btype));
         }
 
@@ -179,9 +189,17 @@ bool House::readHouseYaml(const std::string &filename) {
     return true;
 }
 
-bool House::readBricksYAML(const std::string &filename) {
+bool House::readBricksYAML(const std::string &path) {
     try {
-        YAML::Node root = YAML::LoadFile(filename);
+        YAML::Node root = YAML::LoadFile(path);
+        return parseBricksYAML(root);
+    } catch (...) {
+        return false;
+    }
+}
+
+bool House::parseBricksYAML(const YAML::Node &root) {
+    try {
             if (!root["bricks"])
                 VALIDATION_ERROR("No bricks defined");
 
@@ -192,6 +210,10 @@ bool House::readBricksYAML(const std::string &filename) {
                 double len = size["length"].as<double>();
                 double h = size["height"].as<double>();
                 double w = size["width"].as<double>();
+                if (len <= 0 || h <= 0 || w <= 0)
+                    VALIDATION_ERROR("Brick " + id + " has non-positive dimensions");
+                if (find_brick_by_id(id) != nullptr)
+                    VALIDATION_ERROR("Duplicate brick id: " + id);
 
                 Bricks brick(id, len, h, w);
 
@@ -222,13 +244,21 @@ bool House::readBricksYAML(const std::string &filename) {
     return true;
 }
 
+
+bool House::readMaterialsYaml(const std::string& path) {
+    try {
+        YAML::Node root = YAML::LoadFile(path);
+        return parseMaterialsYAML(root);
+    } catch (...) {
+        return false;
+    }
+}
+
 // Read materials and cost parameters from YAML.
 // Expected fields: prices.brick_cost (per piece), prices.cement_cost_per_5kg, prices.water_cost_per_litre
 // parameters.cement_kg_per_1000_bricks, parameters.water_l_per_kg_cement
-bool House::readMaterialsYaml(const std::string &filename) { 
+bool House::parseMaterialsYAML(const YAML::Node& root) { 
     try {
-        YAML::Node root = YAML::LoadFile(filename);
-
         auto cement = root["materials"]["cement"];
         auto water  = root["materials"]["water"];
         auto sand   = root["materials"]["sand"];
