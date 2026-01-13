@@ -1,6 +1,6 @@
 #include "HouseClass.h"
 #define VALIDATION_ERROR(msg) \
-    do { std::cerr << "Validation error: " << msg << std::endl; return false; } while (0)
+    do { spdlog::error("Validation error: {}", msg); return false; } while (0)
 
 House::House() {
     owner_name = "";
@@ -15,6 +15,7 @@ House::~House() {
 }
 
 /*
+DEPRECATED: PARSING SPECIFICATIONS FROM TEXTFILE
 void House::readHouseData(std::string filename) {
     std::ifstream infile(filename);
     if (!infile) {
@@ -90,11 +91,13 @@ void House::readHouseData(std::string filename) {
 }
 */
 
+//Division of files into reading and parsing functions for better error handling and testing
 bool House::readHouseYaml(const std::string& path) {
     try {
         YAML::Node root = YAML::LoadFile(path);
         return parseHouseYaml(root);
     } catch (...) {
+
         return false;
     }
 }
@@ -104,8 +107,8 @@ bool House::readHouseYaml(const std::string& path) {
 // walls: [ {id, height, width, thickness, brick_type, windows, doors}, ... ]
 // windows: [ {id, height, width, wall}, ... ]
 // doors: [ {id, height, width, wall}, ... ]
-// bricks: [ {id, height, width, thickness}, ... ]
 bool House::parseHouseYaml(const YAML::Node &root) {
+    spdlog::info("Parsing house YAML data");
     try {
         if (!root["owner"])
             VALIDATION_ERROR("Missing owner field");
@@ -182,7 +185,7 @@ bool House::parseHouseYaml(const YAML::Node &root) {
         }
 
     } catch (const YAML::Exception &e) {
-        std::cerr << "YAML parse error: " << e.what() << std::endl;
+        spdlog::error("YAML parse error: {}", e.what());
         return false;
     }
 
@@ -190,10 +193,12 @@ bool House::parseHouseYaml(const YAML::Node &root) {
 }
 
 bool House::readBricksYAML(const std::string &path) {
+    spdlog::info("Reading bricks YAML file: {}", path);
     try {
         YAML::Node root = YAML::LoadFile(path);
         return parseBricksYAML(root);
     } catch (...) {
+        //No need to log an error here since it logs it in the calling function
         return false;
     }
 }
@@ -238,7 +243,7 @@ bool House::parseBricksYAML(const YAML::Node &root) {
             }
         } 
         catch (const YAML::Exception &e) {
-            std::cerr << "YAML parse error: " << e.what() << std::endl;
+            spdlog::error("YAML parse error: {}", e.what());
             return false;
         }
     return true;
@@ -284,7 +289,7 @@ bool House::parseMaterialsYAML(const YAML::Node& root) {
         double sand_waste   = waste["sand"].as<double>();
         double water_waste  = waste["water"].as<double>();
 
-        // Validate ranges
+        // Validate ranges : Lambda function; validate is a function ptr that takes a double and a string
         auto validate = [](double v, const char* name) {
             if (v < 0.0 || v > 0.25)
                 throw std::runtime_error(std::string("Invalid waste factor: ") + name);
@@ -298,10 +303,10 @@ bool House::parseMaterialsYAML(const YAML::Node& root) {
         materials.waste_factor = cement_waste; // for backward compatibility
 
     } catch (const YAML::Exception &e) {
-        std::cerr << "YAML parse error (materials): " << e.what() << std::endl;
+        spdlog::error("YAML parse error (materials): {}", e.what());
         return false;
     } catch (const std::runtime_error &e) {
-        std::cerr << "Validation error (materials): " << e.what() << std::endl;
+        spdlog::error("Validation error (materials): {}", e.what());
         return false;
     }
     return true;
@@ -312,22 +317,18 @@ bool House::parseMaterialsYAML(const YAML::Node& root) {
 void House::append_Wall(Walls new_wall) {
     // Push the new wall into the container. Simple and exception-safe.
     walls_arr.push_back(new_wall);
-    std::cout << "Appending Wall: " << new_wall.get_id() << "\n"; // DEBUG
 }
 
 void House::append_Window(Windows new_window) {
     windows_arr.push_back(new_window);
-    std::cout << "Appending Window: " << new_window.get_id() << "\n"; // DEBUG
 }
 
 void House::append_Door(Doors new_door) {
     doors_arr.push_back(new_door);
-    std::cout << "Appending Door: " << new_door.get_id() << "\n"; // DEBUG
 }
 
 void House::append_Brick(Bricks new_brick) {
     bricks_arr.push_back(new_brick);
-    std::cout << "Appending Brick: " << new_brick.get_id() << "\n"; // DEBUG
 }
     
 
@@ -336,64 +337,77 @@ void House::append_Brick(Bricks new_brick) {
 void House::calculate_materials() {
     // Validate inputs
     if (materials.cement_kg_per_m3_mortar <= 0.0) {
-        std::cerr << "Error: cement_kg_per_m3_mortar must be > 0\n";
+        spdlog::error("Error: cement_kg_per_m3_mortar must be > 0");
         return;
     }
     if (materials.sand_m3_per_m3_mortar <= 0.0) {
-        std::cerr << "Error: sand_m3_per_m3_mortar must be > 0\n";
+        spdlog::error("Error: sand_m3_per_m3_mortar must be > 0");
         return;
     }
     if (materials.sand_density_kg_per_m3 <= 0.0) {
-        std::cerr << "Error: sand_density_kg_per_m3 must be > 0\n";
+        spdlog::error("Error: sand_density_kg_per_m3 must be > 0");
         return;
     }
     if (materials.cement_bag_kg <= 0.0) { // add this field to Materials struct
-        std::cerr << "Error: materials.cement_bag_kg must be > 0\n";
+        spdlog::error("Error: materials.cement_bag_kg must be > 0");
         return;
     }
 
     summary.mortar_m3_base = 0.0;
 
+    spdlog::info("Calculating material requirements...");
     for (const auto &brick_est : summary.bricks) {
         const Bricks *brick = find_brick_by_id(brick_est.type);
         if (!brick) {
-            std::cerr << "Error: unknown brick type '" << brick_est.type << "'\n";
+            spdlog::error("Error: unknown brick type '{}'", brick_est.type);
             continue; // or return / throw
         }
         double mortar_m3 = (static_cast<double>(brick_est.num) / 1000.0) * brick->mortar_m3_per_1000_bricks;
         summary.mortar_m3_base += mortar_m3;
     }
+    spdlog::info("Iterated through bricks to get the aggregated mortar volume: {}", summary.mortar_m3_base);
 
     summary.mortar_m3_with_waste = summary.mortar_m3_base * (1.0 + materials.waste_factor);
+    spdlog::info("Total mortar required with waste factor also considered: {}", summary.mortar_m3_with_waste);
 
     // Cement
     summary.cement_kg_base = summary.mortar_m3_base * materials.cement_kg_per_m3_mortar;
+    spdlog::info("Using mortar volume to calculate cement requirements: {}", summary.cement_kg_base);
+    
     summary.cement_kg_final = summary.cement_kg_base * (1.0 + materials.waste_factor);
+    spdlog::info("Factoring in waste for final volume: {}", summary.cement_kg_final);
 
     summary.cement_bags = static_cast<int>(std::ceil(summary.cement_kg_final / materials.cement_bag_kg));
     summary.cement_cost = summary.cement_bags * materials.cement_cost_per_bag; // materials fields: cement_bag_kg, cement_cost_per_bag
+    spdlog::info("Cement bags required: {}, total cement cost: {}", summary.cement_bags, summary.cement_cost);
 
     // Water
     summary.water_l = summary.cement_kg_final * materials.water_l_per_kg_cement;
+    spdlog::info("Total water required (total cement kg * litres per kg): {}", summary.water_l);
     summary.water_cost = summary.water_l * materials.water_cost_per_litre;
+    spdlog::info("Total water cost: {}", summary.water_cost);
 
     // Sand
     summary.sand_m3 = summary.mortar_m3_with_waste * materials.sand_m3_per_m3_mortar;
+    spdlog::info("Total sand volume required (mortar_wwaste * sand_m3_per_m3_mortar): {}", summary.sand_m3);
     summary.sand_kg = summary.sand_m3 * materials.sand_density_kg_per_m3;
+    spdlog::info("Total sand mass required (sand_m3 * sand_density_kg_per_m3): {}", summary.sand_kg);
     summary.sand_tonnes = summary.sand_kg / 1000.0;
     summary.sand_cost = summary.sand_tonnes * materials.sand_cost_per_tonne;
+    spdlog::info("Total sand cost: {}", summary.sand_cost);
 
     // Total cost
     summary.total_cost = summary.cement_cost + summary.water_cost + summary.sand_cost;
-    for (const auto &b : summary.bricks) summary.total_cost += b.cost;
-}
 
+    for (const auto &b : summary.bricks) summary.total_cost += b.cost;
+    spdlog::info("Total material cost: {bricks, cement, water, sand}", summary.total_cost);
+}
 
 
 bool House::writeOutputYaml(const std::string &outfile) {
     // Ensure calculations are done
     if (summary.total_bricks == 0 && summary.bricks.empty()) {
-        std::cerr << "Error: resource summary is empty. Run calculate_bricks() and calculate_materials() first." << std::endl;
+        spdlog::error("Error: resource summary is empty. Run calculate_bricks() and calculate_materials() first.");
         return false;
     }
 
@@ -459,7 +473,7 @@ bool House::writeOutputYaml(const std::string &outfile) {
     // Write to file
     std::ofstream ofs(outfile);
     if (!ofs) {
-        std::cerr << "Error opening output file: " << outfile << std::endl;
+        spdlog::error("Error opening output file: {}", outfile);
         return false;
     }
     ofs << out.c_str();
@@ -486,15 +500,20 @@ void House::calculate_bricks() {
     summary.total_bricks = 0;
 
     // For each brick type, sum bricks per wall that uses that brick
+    spdlog::info("Iterating through each type of brick to calculate the total required...");
     for (const auto &brick : bricks_arr) {
 
+        spdlog::info("Calculating for brick type: {}", brick.get_id());
         int total_bricks_for_type = 0;
         double total_net_area_for_type = 0.0;
 
         for (const auto &wall : walls_arr) {
+            spdlog::info("Currently on wall: {}", wall.get_id());
             if (wall.get_brick_type() != brick.get_id()) continue;
 
+
             double wall_area = wall.get_height() * wall.get_width();
+            spdlog::info("Initial wall area (HxW): {}", wall_area);
 
             // Subtract openings that belong to this wall
             for (const auto &win : windows_arr) {
@@ -506,6 +525,7 @@ void House::calculate_bricks() {
             if (wall_area <= 0.0) continue;
 
             total_net_area_for_type += wall_area;
+            spdlog::info("Net wall area after subtracting openings: {}", wall_area);
 
             // Determine bricks per m2 for this wall thickness
             double thickness = wall.get_thickness();
@@ -513,15 +533,15 @@ void House::calculate_bricks() {
             try {
                 bricks_per_m2 = brick.get_bricks_per_m2(thickness);
             } catch (const std::exception &e) {
-                std::cerr << "Error: brick type '" << brick.get_id()
-                          << "' has no bricks_per_m2 defined for thickness "
-                          << thickness << ". " << e.what() << std::endl;
+                spdlog::error("Error {}: brick type '{}' has no bricks_per_m2 defined for thickness {}.",
+                     e.what(), brick.get_id(), thickness);
                 throw; // or handle gracefully
             }
 
             // Bricks for this wall (round up per wall)
             int bricks_for_wall = static_cast<int>(std::ceil(wall_area * bricks_per_m2));
             total_bricks_for_type += bricks_for_wall;
+            spdlog::info("Bricks needed for wall {}: {}", wall.get_id(), bricks_for_wall);
         }
 
         // If no walls used this brick type, skip
@@ -532,10 +552,13 @@ void House::calculate_bricks() {
         est.num = total_bricks_for_type;
         est.unit_cost = brick.unit_cost;
         est.cost = est.num * est.unit_cost;
+        spdlog::info("Bricks of type {}: {}", brick.get_id(), total_bricks_for_type);
+        spdlog::info("Total cost for this brick type: {}", est.cost);
 
         summary.bricks.push_back(est);
         summary.total_bricks += est.num;
     }
+    spdlog::info("Finished calculating bricks. Total bricks required: {}", summary.total_bricks);
 }
 
 

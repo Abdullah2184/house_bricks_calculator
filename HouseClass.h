@@ -11,6 +11,7 @@
 #include "WindowsClass.h"
 #include "BricksClass.h"
 #include "DoorsClass.h"
+#include <spdlog/spdlog.h>
 
 class House {
     public:
