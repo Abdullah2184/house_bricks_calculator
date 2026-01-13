@@ -4,22 +4,23 @@
 #include <yaml-cpp/yaml.h>
 
 static void usage(const char *prog) {
-    std::cout << "Usage: " << prog << " -H <house.yaml> -m <materials.yaml> [-o output.yaml]\n";
+    std::cout << "Usage: " << prog << " -H <house.yaml> -b <bricks.yaml> -m <materials.yaml> [-o output.yaml]\n";
 }
 
 int main(int argc, char** argv) {
-    std::string house_file, materials_file, out_file = "output.yaml";
+    std::string house_file, bricks_file, materials_file, out_file = "output.yaml";
     for (int i = 1; i < argc; ++i) {
         std::string a = argv[i];
         if (a == "-h" || a == "--help") { usage(argv[0]); return 0; }
         if ((a == "-H" || a == "--house") && i + 1 < argc) { house_file = argv[++i]; continue; }
+        if ((a == "-b" || a == "--bricks") && i + 1 < argc) { bricks_file = argv[++i]; continue; }
         if ((a == "-m" || a == "--materials") && i + 1 < argc) { materials_file = argv[++i]; continue; }
         if ((a == "-o" || a == "--output") && i + 1 < argc) { out_file = argv[++i]; continue; }
         std::cerr << "Unknown arg: " << a << "\n"; usage(argv[0]); return 1;
     }
 
-    if (house_file.empty() || materials_file.empty()) {
-        std::cerr << "Error: must specify both house and materials input files (use -H <house.yaml> -m <materials.yaml>).\n";
+    if (house_file.empty() || bricks_file.empty() || materials_file.empty()) {
+        std::cerr << "Error: must specify house, bricks and materials input files (use -H <house.yaml> -b <bricks.yaml> -m <materials.yaml>).\n";
         usage(argv[0]);
         return 1;
     }
@@ -27,6 +28,10 @@ int main(int argc, char** argv) {
     House userHouse;
     if (!userHouse.readHouseYaml(house_file)) {
         std::cerr << "Failed to read house file: " << house_file << std::endl;
+        return 1;
+    }
+    if (!userHouse.readBricksYAML(bricks_file)) {
+        std::cerr << "Failed to read bricks file: " << bricks_file << std::endl;
         return 1;
     }
     if (!userHouse.readMaterialsYaml(materials_file)) {
