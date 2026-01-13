@@ -254,7 +254,7 @@ INSTANTIATE_TEST_SUITE_P(
     MaterialsYamlParamTest,
     ::testing::Values(
 
-        // ✅ VALID
+        // VALID
         MaterialsYamlCase{
             "Valid materials",
             R"(
